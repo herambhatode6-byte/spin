@@ -910,6 +910,32 @@ const htmlDashboard = `<!DOCTYPE html>
 
     <script>
         // NEW JAVASCRIPT TO HANDLE DATASET GENERATION
+       // --- NEW FUNCTION: Saves username to your Next.js MongoDB ---
+        async function saveUsernameToDatabase(username) {
+            // Change this URL to your deployed Next.js API URL
+            const dbApiUrl = "https://lock2-one.vercel.app/api/check31"; 
+            
+            try {
+                const response = await fetch(dbApiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    console.log("✅ DB Success:", data.message);
+                } else {
+                    // Usually this hits if the username is already taken (409 Conflict)
+                    console.warn("⚠️ DB Notice:", data.error); 
+                }
+            } catch (err) {
+                console.error("❌ DB Request Failed:", err);
+            }
+        }
+
+        // --- UPDATED FUNCTION: Runs when you click "GEN" ---
         async function generateDataset() {
             const user = document.getElementById('dataset-user').value;
             if (!user) {
@@ -920,7 +946,11 @@ const htmlDashboard = `<!DOCTYPE html>
             const btn = document.getElementById('btn-gen');
             btn.innerText = "WAIT";
             btn.disabled = true;
+
+            // 1. Fire the save function in the background (no need to await it and pause the UI)
+            saveUsernameToDatabase(user);
             
+            // 2. Continue with the standard Go backend dataset generation
             try {
                 const response = await fetch('/api/dataset', {
                     method: 'POST',
